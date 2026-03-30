@@ -7,13 +7,13 @@ import {
   Modal,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenContainer } from '../../../shared/ui/layout/ScreenContainer';
 import { layoutTokens } from '../../../shared/ui/layout/layoutTokens';
 import { triggerTapHaptic } from '../../../shared/lib/haptics/hapticFeedback';
@@ -101,6 +101,7 @@ const COUNTRY_OPTIONS: CountryOption[] = [
 ];
 
 type StayInfo = {
+  accommodationId: number;
   accommodationName: string;
   roomType: string;
   checkIn: string;
@@ -108,6 +109,7 @@ type StayInfo = {
 };
 
 const MOCK_STAY_INFO: StayInfo | null = {
+  accommodationId: 1001,
   accommodationName: 'Sydney Central Backpackers',
   roomType: 'Shared Dorm • 6 Beds',
   checkIn: '2026-03-25',
@@ -117,6 +119,7 @@ const MOCK_STAY_INFO: StayInfo | null = {
 type StayCompanion = {
   id: number;
   name: string;
+  accommodationId: number;
   accommodationName: string;
   checkIn: string;
   checkOut: string;
@@ -127,6 +130,7 @@ const MOCK_STAY_COMPANIONS: StayCompanion[] = [
   {
     id: 101,
     name: 'Emma',
+    accommodationId: 1001,
     accommodationName: 'Sydney Central Backpackers',
     checkIn: '2026-03-27',
     checkOut: '2026-04-03',
@@ -134,6 +138,7 @@ const MOCK_STAY_COMPANIONS: StayCompanion[] = [
   {
     id: 102,
     name: 'Lucas',
+    accommodationId: 1001,
     accommodationName: 'Sydney Central Backpackers',
     checkIn: '2026-03-29',
     checkOut: '2026-04-08',
@@ -142,6 +147,7 @@ const MOCK_STAY_COMPANIONS: StayCompanion[] = [
   {
     id: 103,
     name: 'Olivia',
+    accommodationId: 1001,
     accommodationName: 'Sydney Central Backpackers',
     checkIn: '2026-04-02',
     checkOut: '2026-04-06',
@@ -150,6 +156,7 @@ const MOCK_STAY_COMPANIONS: StayCompanion[] = [
   {
     id: 104,
     name: 'Noah',
+    accommodationId: 1002,
     accommodationName: 'Sydney Harbour Hostel',
     checkIn: '2026-03-27',
     checkOut: '2026-03-30',
@@ -157,6 +164,7 @@ const MOCK_STAY_COMPANIONS: StayCompanion[] = [
   {
     id: 105,
     name: 'Mia',
+    accommodationId: 1001,
     accommodationName: 'Sydney Central Backpackers',
     checkIn: '2026-04-10',
     checkOut: '2026-04-12',
@@ -177,7 +185,7 @@ function getOverlappingCompanions(stay: StayInfo | null, companions: StayCompani
   }
 
   return companions.filter(companion => {
-    const sameAccommodation = companion.accommodationName === stay.accommodationName;
+    const sameAccommodation = companion.accommodationId === stay.accommodationId;
     if (!sameAccommodation) {
       return false;
     }
@@ -309,7 +317,7 @@ export function CommunityScreen() {
           columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchPosts(true)} />}
           ListEmptyComponent={<Text style={styles.stateText}>No posts yet in this city.</Text>}
-          renderItem={({ item }) => <PostCard post={item} isTablet={isTablet} />}
+          renderItem={({ item }) => <PostCard post={item} isTablet={isTablet} myStay={myStay} />}
         />
       )}
 
@@ -444,77 +452,83 @@ function LocationPickerModal({
 
   return (
     <Modal animationType="fade" transparent={false} visible={visible} onRequestClose={onClose}>
-      <SafeAreaView style={styles.fullModalRoot}>
-        <View style={styles.fullModalFrame}>
-          <View style={styles.fullModalHeader}>
-            <Text style={styles.fullModalTitle}>{isCountryStep ? 'Select Country' : 'Select City'}</Text>
-          </View>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.fullModalRoot}>
+          <View style={styles.fullModalFrame}>
+            <View style={styles.fullModalHeader}>
+              <Text style={styles.fullModalTitle}>{isCountryStep ? 'Select Country' : 'Select City'}</Text>
+            </View>
 
-          <ScrollView contentContainerStyle={styles.fullModalContent} showsVerticalScrollIndicator={false}>
-            {isCountryStep ? (
-              <View style={styles.countryGrid}>
-                {countries.map(country => {
-                  const selected = country.code === draftCountryCode;
-                  return (
-                    <Pressable
-                      key={country.code}
-                      onPressIn={triggerTapHaptic}
-                      onPress={() => {
-                        setDraftCountryCode(country.code);
-                        const firstCityCode = country.cities[0]?.code ?? draftCityCode;
-                        setDraftCityCode(firstCityCode);
-                      }}
-                      style={[styles.countryCard, selected && styles.countryCardSelected]}
-                    >
-                      <Text style={styles.countryFlag}>{country.flag}</Text>
-                      <Text style={[styles.countryName, selected && styles.countryNameSelected]}>{country.name}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : (
-              <>
-                <View style={styles.cityHeaderRow}>
-                  <Text style={styles.citySectionTitle}>{selectedCountry.flag} {selectedCountry.name}</Text>
-                  <Pressable
-                    onPressIn={triggerTapHaptic}
-                    onPress={() => setStep('COUNTRY')}
-                    style={styles.backButton}
-                  >
-                    <Text style={styles.backButtonText}>Change Country</Text>
-                  </Pressable>
-                </View>
-              <View style={styles.cityWrap}>
-                {selectedCountry.cities.map(city => {
-                  const selected = city.code === draftCityCode;
-                  return (
-                    <Pressable
-                      key={city.code}
-                      onPressIn={triggerTapHaptic}
-                      onPress={() => setDraftCityCode(city.code)}
-                      style={[styles.cityChip, selected && styles.cityChipSelected]}
-                    >
-                      <Text style={[styles.cityChipText, selected && styles.cityChipTextSelected]}>
-                        {city.name}
+            <ScrollView contentContainerStyle={styles.fullModalContent} showsVerticalScrollIndicator={false}>
+              {isCountryStep ? (
+                <View style={styles.countryGrid}>
+                  {countries.map(country => {
+                    const selected = country.code === draftCountryCode;
+                    return (
+                      <Pressable
+                        key={country.code}
+                        onPressIn={triggerTapHaptic}
+                        onPress={() => {
+                          setDraftCountryCode(country.code);
+                          const firstCityCode = country.cities[0]?.code ?? draftCityCode;
+                          setDraftCityCode(firstCityCode);
+                        }}
+                        style={[styles.countryCard, selected && styles.countryCardSelected]}
+                      >
+                        <Text style={styles.countryFlag}>{country.flag}</Text>
+                        <Text style={[styles.countryName, selected && styles.countryNameSelected]}>
+                          {country.name}
                         </Text>
                       </Pressable>
                     );
                   })}
                 </View>
-              </>
-            )}
-          </ScrollView>
+              ) : (
+                <>
+                  <View style={styles.cityHeaderRow}>
+                    <Text style={styles.citySectionTitle}>
+                      {selectedCountry.flag} {selectedCountry.name}
+                    </Text>
+                    <Pressable
+                      onPressIn={triggerTapHaptic}
+                      onPress={() => setStep('COUNTRY')}
+                      style={styles.backButton}
+                    >
+                      <Text style={styles.backButtonText}>Change Country</Text>
+                    </Pressable>
+                  </View>
+                  <View style={styles.cityWrap}>
+                    {selectedCountry.cities.map(city => {
+                      const selected = city.code === draftCityCode;
+                      return (
+                        <Pressable
+                          key={city.code}
+                          onPressIn={triggerTapHaptic}
+                          onPress={() => setDraftCityCode(city.code)}
+                          style={[styles.cityChip, selected && styles.cityChipSelected]}
+                        >
+                          <Text style={[styles.cityChipText, selected && styles.cityChipTextSelected]}>
+                            {city.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+            </ScrollView>
 
-          <View style={styles.fullModalFooter}>
-            <Pressable onPressIn={triggerTapHaptic} onPress={onClose} style={styles.footerCloseButton}>
-              <Text style={styles.footerCloseButtonText}>Close</Text>
-            </Pressable>
-            <Pressable onPress={handlePrimaryAction} style={styles.footerPrimaryButton}>
-              <Text style={styles.footerPrimaryButtonText}>{isCountryStep ? 'Select City' : 'Save'}</Text>
-            </Pressable>
+            <View style={styles.fullModalFooter}>
+              <Pressable onPressIn={triggerTapHaptic} onPress={onClose} style={styles.footerCloseButton}>
+                <Text style={styles.footerCloseButtonText}>Close</Text>
+              </Pressable>
+              <Pressable onPress={handlePrimaryAction} style={styles.footerPrimaryButton}>
+                <Text style={styles.footerPrimaryButtonText}>{isCountryStep ? 'Select City' : 'Save'}</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }
@@ -522,10 +536,24 @@ function LocationPickerModal({
 type PostCardProps = {
   post: CommunityPost;
   isTablet: boolean;
+  myStay: StayInfo | null;
 };
 
-function PostCard({ post, isTablet }: PostCardProps) {
+function PostCard({ post, isTablet, myStay }: PostCardProps) {
   const isGathering = post.type === 'GATHERING';
+  const isAccommodationAudience = post.audienceScope === 'ACCOMMODATION_ONLY';
+  const isSameStayGathering =
+    isGathering &&
+    isAccommodationAudience &&
+    !!myStay &&
+    !!post.accommodationId &&
+    post.accommodationId === myStay.accommodationId &&
+    !!post.audienceStayStartDate &&
+    !!post.audienceStayEndDate &&
+    hasDateOverlap(myStay.checkIn, myStay.checkOut, post.audienceStayStartDate, post.audienceStayEndDate);
+  const audienceLabel = isAccommodationAudience ? 'My accommodation only' : 'City-wide';
+  const accommodationLabel =
+    post.accommodationName ?? (post.accommodationId ? `Accommodation #${post.accommodationId}` : null);
 
   return (
     <View style={[styles.card, isTablet && styles.cardTablet]}>
@@ -540,7 +568,14 @@ function PostCard({ post, isTablet }: PostCardProps) {
             {isGathering ? 'Gathering' : 'Free Feed'}
           </Text>
         </View>
-        <Text style={styles.cityBadge}>{post.countryCode} · {post.cityCode}</Text>
+        <View style={styles.cardHeaderMeta}>
+          {isSameStayGathering ? (
+            <View style={styles.sameStayBadge}>
+              <Text style={styles.sameStayBadgeText}>My Stay</Text>
+            </View>
+          ) : null}
+          <Text style={styles.cityBadge}>{post.countryCode} · {post.cityCode}</Text>
+        </View>
       </View>
 
       <Text style={styles.cardContent}>{post.content}</Text>
@@ -552,10 +587,16 @@ function PostCard({ post, isTablet }: PostCardProps) {
 
       {isGathering && post.joinPolicy ? (
         <View style={styles.policyBox}>
-          <Text style={styles.policyText}>
-            Join policy: {post.joinPolicy === 'APPROVAL' ? 'Approval required' : 'Free join'}
-          </Text>
-          {post.maxParticipants ? <Text style={styles.policyMeta}>Max {post.maxParticipants}</Text> : null}
+          <View style={styles.policyLeftGroup}>
+            <Text style={styles.policyText}>
+              Join policy: {post.joinPolicy === 'APPROVAL' ? 'Approval required' : 'Free join'}
+            </Text>
+            <Text style={styles.policyAudienceText}>Audience: {audienceLabel}</Text>
+          </View>
+          <View style={styles.policyRightGroup}>
+            {accommodationLabel ? <Text style={styles.policyAccommodation}>{accommodationLabel}</Text> : null}
+            {post.maxParticipants ? <Text style={styles.policyMeta}>Max {post.maxParticipants}</Text> : null}
+          </View>
         </View>
       ) : null}
     </View>
@@ -682,6 +723,7 @@ const styles = StyleSheet.create({
     borderRadius: spacing[16],
     padding: spacing[14],
     marginBottom: spacing[12],
+    overflow: 'hidden',
   },
   stayCardEmpty: {
     backgroundColor: colors.surface,
@@ -809,7 +851,24 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: spacing[8],
+  },
+  cardHeaderMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[6],
+  },
+  sameStayBadge: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 999,
+    paddingHorizontal: spacing[8],
+    paddingVertical: spacing[4],
+  },
+  sameStayBadgeText: {
+    color: colors.primary,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
   },
   typeBadge: {
     borderRadius: 999,
@@ -938,10 +997,29 @@ const styles = StyleSheet.create({
     paddingTop: spacing[8],
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  policyLeftGroup: {
+    flex: 1,
+    paddingRight: spacing[10],
+  },
+  policyRightGroup: {
+    alignItems: 'flex-end',
+    gap: spacing[2],
   },
   policyText: {
     color: colors.textSecondary,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
+  },
+  policyAudienceText: {
+    marginTop: spacing[2],
+    color: colors.textTertiary,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.medium,
+  },
+  policyAccommodation: {
+    color: colors.primary,
     fontSize: typography.size.xs,
     fontWeight: typography.weight.semibold,
   },
