@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Plus from 'lucide-react-native/dist/cjs/icons/plus';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -21,8 +23,10 @@ import { breakpoints } from '../../../shared/theme/breakpoints';
 import { colors } from '../../../shared/theme/colors';
 import { spacing } from '../../../shared/theme/spacing';
 import { typography } from '../../../shared/theme/typography';
-import { listCommunityPosts } from '../api/communityApi';
-import { CommunityPost, CommunityPostFilterType } from '../types/community';
+import { createCommunityPost, listCommunityPosts } from '../api/communityApi';
+import { CommunityPost, CommunityPostFilterType, GatheringAudienceScope, JoinPolicy, PostType } from '../types/community';
+import { useAuthGate } from '../../../shared/lib/auth/authGate';
+import { useToast } from '../../../shared/ui/toast/ToastProvider';
 
 const FILTERS: Array<{ key: CommunityPostFilterType; label: string }> = [
   { key: 'ALL', label: 'All' },
@@ -213,6 +217,23 @@ export function CommunityScreen() {
 
   const [myStay, setMyStay] = useState<StayInfo | null>(MOCK_STAY_INFO);
   const [stayExpanded, setStayExpanded] = useState(true);
+  const { session, openLogin } = useAuthGate();
+  const { showToast } = useToast();
+  const [composerTypePickerOpen, setComposerTypePickerOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerType, setComposerType] = useState<PostType>('FREE_FEED');
+  const [composerJoinPolicy, setComposerJoinPolicy] = useState<JoinPolicy>('APPROVAL');
+  const [composerAudienceScope, setComposerAudienceScope] = useState<GatheringAudienceScope>('CITY_WIDE');
+  const [composerContent, setComposerContent] = useState('');
+  const [composerLocation, setComposerLocation] = useState('');
+  const [composerDestination, setComposerDestination] = useState('');
+  const [composerMeetingPlace, setComposerMeetingPlace] = useState('');
+  const [composerMeetingAt, setComposerMeetingAt] = useState('');
+  const [composerMaxParticipants, setComposerMaxParticipants] = useState('');
+  const [composerAccommodationId, setComposerAccommodationId] = useState('');
+  const [composerAudienceStartDate, setComposerAudienceStartDate] = useState('');
+  const [composerAudienceEndDate, setComposerAudienceEndDate] = useState('');
+  const [composerSubmitting, setComposerSubmitting] = useState(false);
 
   const overlappingCompanions = useMemo(
     () => getOverlappingCompanions(myStay, MOCK_STAY_COMPANIONS),
@@ -255,6 +276,162 @@ export function CommunityScreen() {
   useEffect(() => {
     fetchPosts(false);
   }, [fetchPosts]);
+
+  const handlePressCreatePost = () => {
+    triggerTapHaptic();
+
+    if (!session) {
+      openLogin();
+      return;
+    }
+
+    setComposerType('FREE_FEED');
+    setComposerJoinPolicy('APPROVAL');
+    setComposerAudienceScope('CITY_WIDE');
+    setComposerContent('');
+    setComposerLocation('');
+    setComposerDestination('');
+    setComposerMeetingPlace('');
+    setComposerMeetingAt('');
+    setComposerMaxParticipants('');
+    setComposerAccommodationId('');
+    setComposerAudienceStartDate('');
+    setComposerAudienceEndDate('');
+    setComposerTypePickerOpen(true);
+  };
+
+  const handleSelectComposerType = (type: PostType) => {
+    triggerTapHaptic();
+    setComposerType(type);
+    setComposerTypePickerOpen(false);
+    setComposerOpen(true);
+  };
+
+  const handlePressJoin = () => {
+    triggerTapHaptic();
+
+    if (!session) {
+      openLogin();
+      return;
+    }
+
+    showToast({ message: 'Join flow will be connected next.', tone: 'info' });
+  };
+
+  const handleSubmitPost = async () => {
+    const content = composerContent.trim();
+    const location = composerLocation.trim();
+    const destination = composerDestination.trim();
+    const meetingPlace = composerMeetingPlace.trim();
+    const meetingAt = composerMeetingAt.trim();
+    const maxParticipants = Number(composerMaxParticipants);
+    const accommodationId = Number(composerAccommodationId);
+    const audienceStartDate = composerAudienceStartDate.trim();
+    const audienceEndDate = composerAudienceEndDate.trim();
+
+    if (!session) {
+      setComposerOpen(false);
+      openLogin();
+      return;
+    }
+
+    if (!content) {
+      showToast({ message: 'Please enter post content.', tone: 'error' });
+      return;
+    }
+
+    if (composerType === 'GATHERING') {
+      if (!destination || !meetingPlace || !meetingAt || !composerMaxParticipants.trim()) {
+        showToast({ message: 'Please fill all required gathering fields.', tone: 'error' });
+        return;
+      }
+
+      if (!Number.isFinite(maxParticipants) || maxParticipants <= 0) {
+        showToast({ message: 'Max participants must be a positive number.', tone: 'error' });
+        return;
+      }
+
+      if (composerAudienceScope === 'ACCOMMODATION_ONLY') {
+        if (!composerAccommodationId.trim() || !audienceStartDate || !audienceEndDate) {
+          showToast({ message: 'Accommodation-only gathering requires stay fields.', tone: 'error' });
+          return;
+        }
+
+        if (!Number.isFinite(accommodationId) || accommodationId <= 0) {
+          showToast({ message: 'Accommodation ID must be a positive number.', tone: 'error' });
+          return;
+        }
+      }
+    }
+
+    try {
+      setComposerSubmitting(true);
+      if (composerType === 'FREE_FEED') {
+        await createCommunityPost({
+          authorUserId: session.userId,
+          countryCode: selectedCountryCode,
+          cityCode: selectedCityCode,
+          type: 'FREE_FEED',
+          content,
+          locationName: location || null,
+          imageUrl: null,
+        });
+      } else {
+        if (composerAudienceScope === 'ACCOMMODATION_ONLY') {
+          await createCommunityPost({
+            authorUserId: session.userId,
+            countryCode: selectedCountryCode,
+            cityCode: selectedCityCode,
+            type: 'GATHERING',
+            audienceScope: 'ACCOMMODATION_ONLY',
+            accommodationId,
+            audienceStayStartDate: audienceStartDate,
+            audienceStayEndDate: audienceEndDate,
+            content,
+            imageUrl: null,
+            locationName: location || null,
+            destination,
+            meetingPlace,
+            meetingAt,
+            maxParticipants,
+            joinPolicy: composerJoinPolicy,
+          });
+        } else {
+          await createCommunityPost({
+            authorUserId: session.userId,
+            countryCode: selectedCountryCode,
+            cityCode: selectedCityCode,
+            type: 'GATHERING',
+            audienceScope: 'CITY_WIDE',
+            accommodationId: null,
+            audienceStayStartDate: null,
+            audienceStayEndDate: null,
+            content,
+            imageUrl: null,
+            locationName: location || null,
+            destination,
+            meetingPlace,
+            meetingAt,
+            maxParticipants,
+            joinPolicy: composerJoinPolicy,
+          });
+        }
+      }
+
+      setComposerOpen(false);
+      setComposerContent('');
+      setComposerLocation('');
+      showToast({ message: 'Post created successfully.', tone: 'success' });
+      await fetchPosts(false);
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : 'Failed to create post.',
+        tone: 'error',
+      });
+    } finally {
+      setComposerSubmitting(false);
+    }
+  };
 
   return (
     <ScreenContainer>
@@ -317,9 +494,16 @@ export function CommunityScreen() {
           columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchPosts(true)} />}
           ListEmptyComponent={<Text style={styles.stateText}>No posts yet in this city.</Text>}
-          renderItem={({ item }) => <PostCard post={item} isTablet={isTablet} myStay={myStay} />}
+          renderItem={({ item }) => (
+            <PostCard post={item} isTablet={isTablet} myStay={myStay} onPressJoin={handlePressJoin} />
+          )}
         />
       )}
+
+      <Pressable onPress={handlePressCreatePost} style={styles.writeFab}>
+        <Plus size={16} color={colors.semantic.white} />
+        <Text style={styles.writeFabText}>Create Post</Text>
+      </Pressable>
 
       <LocationPickerModal
         visible={selectorOpen}
@@ -333,7 +517,339 @@ export function CommunityScreen() {
           setSelectorOpen(false);
         }}
       />
+
+      <CreatePostTypeModal
+        visible={composerTypePickerOpen}
+        onClose={() => setComposerTypePickerOpen(false)}
+        onSelectType={handleSelectComposerType}
+      />
+
+      <CreatePostModal
+        visible={composerOpen}
+        type={composerType}
+        joinPolicy={composerJoinPolicy}
+        audienceScope={composerAudienceScope}
+        content={composerContent}
+        locationName={composerLocation}
+        destination={composerDestination}
+        meetingPlace={composerMeetingPlace}
+        meetingAt={composerMeetingAt}
+        maxParticipants={composerMaxParticipants}
+        accommodationId={composerAccommodationId}
+        audienceStartDate={composerAudienceStartDate}
+        audienceEndDate={composerAudienceEndDate}
+        submitting={composerSubmitting}
+        onChangeJoinPolicy={setComposerJoinPolicy}
+        onChangeAudienceScope={setComposerAudienceScope}
+        onChangeContent={setComposerContent}
+        onChangeLocationName={setComposerLocation}
+        onChangeDestination={setComposerDestination}
+        onChangeMeetingPlace={setComposerMeetingPlace}
+        onChangeMeetingAt={setComposerMeetingAt}
+        onChangeMaxParticipants={setComposerMaxParticipants}
+        onChangeAccommodationId={setComposerAccommodationId}
+        onChangeAudienceStartDate={setComposerAudienceStartDate}
+        onChangeAudienceEndDate={setComposerAudienceEndDate}
+        onClose={() => setComposerOpen(false)}
+        onSubmit={handleSubmitPost}
+      />
     </ScreenContainer>
+  );
+}
+
+type CreatePostModalProps = {
+  visible: boolean;
+  type: PostType;
+  joinPolicy: JoinPolicy;
+  audienceScope: GatheringAudienceScope;
+  content: string;
+  locationName: string;
+  destination: string;
+  meetingPlace: string;
+  meetingAt: string;
+  maxParticipants: string;
+  accommodationId: string;
+  audienceStartDate: string;
+  audienceEndDate: string;
+  submitting: boolean;
+  onChangeJoinPolicy: (value: JoinPolicy) => void;
+  onChangeAudienceScope: (value: GatheringAudienceScope) => void;
+  onChangeContent: (value: string) => void;
+  onChangeLocationName: (value: string) => void;
+  onChangeDestination: (value: string) => void;
+  onChangeMeetingPlace: (value: string) => void;
+  onChangeMeetingAt: (value: string) => void;
+  onChangeMaxParticipants: (value: string) => void;
+  onChangeAccommodationId: (value: string) => void;
+  onChangeAudienceStartDate: (value: string) => void;
+  onChangeAudienceEndDate: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+};
+
+function CreatePostModal({
+  visible,
+  type,
+  joinPolicy,
+  audienceScope,
+  content,
+  locationName,
+  destination,
+  meetingPlace,
+  meetingAt,
+  maxParticipants,
+  accommodationId,
+  audienceStartDate,
+  audienceEndDate,
+  submitting,
+  onChangeJoinPolicy,
+  onChangeAudienceScope,
+  onChangeContent,
+  onChangeLocationName,
+  onChangeDestination,
+  onChangeMeetingPlace,
+  onChangeMeetingAt,
+  onChangeMaxParticipants,
+  onChangeAccommodationId,
+  onChangeAudienceStartDate,
+  onChangeAudienceEndDate,
+  onClose,
+  onSubmit,
+}: CreatePostModalProps) {
+  const isGathering = type === 'GATHERING';
+  const isAccommodationOnly = audienceScope === 'ACCOMMODATION_ONLY';
+  const headerTitle = isGathering ? 'Gathering Post' : 'Free Feed Post';
+  const headerDescription = isGathering
+    ? 'Plan a meetup by filling destination, time, and join rules.'
+    : 'Share your daily moments in this city right now.';
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.fullModalRoot}>
+          <View style={styles.fullModalFrame}>
+            <View style={styles.fullModalHeader}>
+              <Text style={styles.fullModalTitle}>{headerTitle}</Text>
+            </View>
+            <Text style={styles.composerDescription}>{headerDescription}</Text>
+
+            <ScrollView
+              style={styles.composerScroll}
+              contentContainerStyle={styles.composerScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.composerFieldWrap}>
+              <Text style={styles.composerLabel}>Content</Text>
+              <TextInput
+                style={[styles.composerInput, styles.composerContentInput]}
+                placeholder="Share what is happening in your city"
+                placeholderTextColor={colors.textTertiary}
+                multiline
+                value={content}
+                onChangeText={onChangeContent}
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.composerLabel}>Location (optional)</Text>
+              <TextInput
+                style={styles.composerInput}
+                placeholder="e.g. Sydney Opera House"
+                placeholderTextColor={colors.textTertiary}
+                value={locationName}
+                onChangeText={onChangeLocationName}
+              />
+
+              {isGathering ? (
+                <>
+                  <Text style={styles.composerLabel}>Destination *</Text>
+                  <TextInput
+                    style={styles.composerInput}
+                    placeholder="e.g. Blue Mountain"
+                    placeholderTextColor={colors.textTertiary}
+                    value={destination}
+                    onChangeText={onChangeDestination}
+                  />
+
+                  <Text style={styles.composerLabel}>Meeting Place *</Text>
+                  <TextInput
+                    style={styles.composerInput}
+                    placeholder="e.g. Town Hall"
+                    placeholderTextColor={colors.textTertiary}
+                    value={meetingPlace}
+                    onChangeText={onChangeMeetingPlace}
+                  />
+
+                  <Text style={styles.composerLabel}>Meeting At (ISO) *</Text>
+                  <TextInput
+                    style={styles.composerInput}
+                    placeholder="2026-05-04T19:00:00"
+                    placeholderTextColor={colors.textTertiary}
+                    value={meetingAt}
+                    onChangeText={onChangeMeetingAt}
+                  />
+
+                  <Text style={styles.composerLabel}>Max Participants *</Text>
+                  <TextInput
+                    style={styles.composerInput}
+                    keyboardType="number-pad"
+                    placeholder="6"
+                    placeholderTextColor={colors.textTertiary}
+                    value={maxParticipants}
+                    onChangeText={onChangeMaxParticipants}
+                  />
+
+                  <Text style={styles.composerLabel}>Join Policy *</Text>
+                  <View style={styles.composerChipRow}>
+                    <Pressable
+                      style={[styles.composerChip, joinPolicy === 'APPROVAL' && styles.composerChipSelected]}
+                      onPress={() => onChangeJoinPolicy('APPROVAL')}
+                    >
+                      <Text
+                        style={[
+                          styles.composerChipText,
+                          joinPolicy === 'APPROVAL' && styles.composerChipTextSelected,
+                        ]}
+                      >
+                        Approval
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.composerChip, joinPolicy === 'FREE' && styles.composerChipSelected]}
+                      onPress={() => onChangeJoinPolicy('FREE')}
+                    >
+                      <Text style={[styles.composerChipText, joinPolicy === 'FREE' && styles.composerChipTextSelected]}>
+                        Free
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <Text style={styles.composerLabel}>Audience Scope *</Text>
+                  <View style={styles.composerChipRow}>
+                    <Pressable
+                      style={[styles.composerChip, audienceScope === 'CITY_WIDE' && styles.composerChipSelected]}
+                      onPress={() => onChangeAudienceScope('CITY_WIDE')}
+                    >
+                      <Text
+                        style={[
+                          styles.composerChipText,
+                          audienceScope === 'CITY_WIDE' && styles.composerChipTextSelected,
+                        ]}
+                      >
+                        City-wide
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[
+                        styles.composerChip,
+                        audienceScope === 'ACCOMMODATION_ONLY' && styles.composerChipSelected,
+                      ]}
+                      onPress={() => onChangeAudienceScope('ACCOMMODATION_ONLY')}
+                    >
+                      <Text
+                        style={[
+                          styles.composerChipText,
+                          audienceScope === 'ACCOMMODATION_ONLY' && styles.composerChipTextSelected,
+                        ]}
+                      >
+                        Accommodation only
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {isAccommodationOnly ? (
+                    <>
+                      <Text style={styles.composerLabel}>Accommodation ID *</Text>
+                      <TextInput
+                        style={styles.composerInput}
+                        keyboardType="number-pad"
+                        placeholder="1001"
+                        placeholderTextColor={colors.textTertiary}
+                        value={accommodationId}
+                        onChangeText={onChangeAccommodationId}
+                      />
+
+                      <Text style={styles.composerLabel}>Audience Start Date *</Text>
+                      <TextInput
+                        style={styles.composerInput}
+                        placeholder="2026-05-01"
+                        placeholderTextColor={colors.textTertiary}
+                        value={audienceStartDate}
+                        onChangeText={onChangeAudienceStartDate}
+                      />
+
+                      <Text style={styles.composerLabel}>Audience End Date *</Text>
+                      <TextInput
+                        style={styles.composerInput}
+                        placeholder="2026-05-10"
+                        placeholderTextColor={colors.textTertiary}
+                        value={audienceEndDate}
+                        onChangeText={onChangeAudienceEndDate}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : null}
+              </View>
+            </ScrollView>
+
+            <View style={styles.fullModalFooter}>
+              <Pressable onPress={onClose} style={styles.footerCloseButton}>
+                <Text style={styles.footerCloseButtonText}>Close</Text>
+              </Pressable>
+              <Pressable onPress={onSubmit} disabled={submitting} style={styles.footerPrimaryButton}>
+                {submitting ? (
+                  <ActivityIndicator color={colors.semantic.white} />
+                ) : (
+                  <Text style={styles.footerPrimaryButtonText}>Publish</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </Modal>
+  );
+}
+
+type CreatePostTypeModalProps = {
+  visible: boolean;
+  onClose: () => void;
+  onSelectType: (type: PostType) => void;
+};
+
+function CreatePostTypeModal({ visible, onClose, onSelectType }: CreatePostTypeModalProps) {
+  return (
+    <Modal visible={visible} animationType="fade" transparent={false} onRequestClose={onClose}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.fullModalRoot}>
+          <View style={styles.fullModalFrame}>
+            <View style={styles.fullModalHeader}>
+              <Text style={styles.fullModalTitle}>Choose Post Type</Text>
+            </View>
+            <Text style={styles.composerDescription}>Select the format that matches what you want to share.</Text>
+
+            <View style={styles.typeSelectWrap}>
+              <Pressable style={styles.typeSelectCard} onPress={() => onSelectType('FREE_FEED')}>
+                <Text style={styles.typeSelectTitle}>Free Feed</Text>
+                <Text style={styles.typeSelectDescription}>Share your daily moments, thoughts, and local tips.</Text>
+              </Pressable>
+
+              <Pressable style={styles.typeSelectCard} onPress={() => onSelectType('GATHERING')}>
+                <Text style={styles.typeSelectTitle}>Gathering</Text>
+                <Text style={styles.typeSelectDescription}>Create a meetup with place, time, and participant rules.</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.fullModalFooter}>
+              <Pressable onPress={onClose} style={styles.footerCloseButton}>
+                <Text style={styles.footerCloseButtonText}>Close</Text>
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </Modal>
   );
 }
 
@@ -537,9 +1053,10 @@ type PostCardProps = {
   post: CommunityPost;
   isTablet: boolean;
   myStay: StayInfo | null;
+  onPressJoin: () => void;
 };
 
-function PostCard({ post, isTablet, myStay }: PostCardProps) {
+function PostCard({ post, isTablet, myStay, onPressJoin }: PostCardProps) {
   const isGathering = post.type === 'GATHERING';
   const isAccommodationAudience = post.audienceScope === 'ACCOMMODATION_ONLY';
   const isSameStayGathering =
@@ -596,6 +1113,9 @@ function PostCard({ post, isTablet, myStay }: PostCardProps) {
           <View style={styles.policyRightGroup}>
             {accommodationLabel ? <Text style={styles.policyAccommodation}>{accommodationLabel}</Text> : null}
             {post.maxParticipants ? <Text style={styles.policyMeta}>Max {post.maxParticipants}</Text> : null}
+            <Pressable onPress={onPressJoin} style={styles.joinButton}>
+              <Text style={styles.joinButtonText}>Join</Text>
+            </Pressable>
           </View>
         </View>
       ) : null}
@@ -1007,6 +1527,18 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing[2],
   },
+  joinButton: {
+    marginTop: spacing[6],
+    borderRadius: spacing[8],
+    backgroundColor: colors.primarySoft,
+    paddingHorizontal: spacing[10],
+    paddingVertical: spacing[6],
+  },
+  joinButtonText: {
+    color: colors.primary,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
+  },
   policyText: {
     color: colors.textSecondary,
     fontSize: typography.size.xs,
@@ -1064,6 +1596,88 @@ const styles = StyleSheet.create({
   },
   fullModalContent: {
     paddingBottom: spacing[24],
+  },
+  composerFieldWrap: {
+    paddingTop: spacing[8],
+  },
+  composerScroll: {
+    flex: 1,
+  },
+  composerScrollContent: {
+    paddingBottom: spacing[16],
+  },
+  composerDescription: {
+    color: colors.textSecondary,
+    fontSize: typography.size.sm,
+    lineHeight: typography.lineHeight.sm,
+    marginBottom: spacing[14],
+  },
+  typeSelectWrap: {
+    gap: spacing[10],
+    marginTop: spacing[10],
+    flex: 1,
+  },
+  typeSelectCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: spacing[14],
+    paddingHorizontal: spacing[14],
+    paddingVertical: spacing[14],
+  },
+  typeSelectTitle: {
+    color: colors.textPrimary,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing[4],
+  },
+  typeSelectDescription: {
+    color: colors.textSecondary,
+    fontSize: typography.size.sm,
+    lineHeight: typography.lineHeight.sm,
+  },
+  composerLabel: {
+    color: colors.textSecondary,
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing[6],
+  },
+  composerChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[8],
+    marginBottom: spacing[12],
+  },
+  composerChip: {
+    borderRadius: 999,
+    paddingHorizontal: spacing[12],
+    paddingVertical: spacing[8],
+    backgroundColor: colors.semantic.alternative,
+  },
+  composerChipSelected: {
+    backgroundColor: colors.primarySoft,
+  },
+  composerChipText: {
+    color: colors.textSecondary,
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold,
+  },
+  composerChipTextSelected: {
+    color: colors.primary,
+  },
+  composerInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: spacing[10],
+    paddingHorizontal: spacing[12],
+    paddingVertical: spacing[10],
+    color: colors.textPrimary,
+    fontSize: typography.size.md,
+    marginBottom: spacing[12],
+  },
+  composerContentInput: {
+    minHeight: 140,
   },
   fullModalFooter: {
     paddingTop: spacing[10],
@@ -1172,5 +1786,28 @@ const styles = StyleSheet.create({
   },
   cityChipTextSelected: {
     color: colors.primary,
+  },
+  writeFab: {
+    position: 'absolute',
+    right: spacing[16],
+    bottom: spacing[20],
+    minHeight: 48,
+    paddingHorizontal: spacing[16],
+    borderRadius: 999,
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    gap: spacing[6],
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.2,
+    shadowRadius: spacing[8],
+    shadowOffset: { width: 0, height: spacing[4] },
+    elevation: 5,
+  },
+  writeFabText: {
+    color: colors.semantic.white,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.bold,
   },
 });
