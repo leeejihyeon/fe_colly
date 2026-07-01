@@ -34,6 +34,14 @@
 				<string>collyapp</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(COLLY_GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
@@ -67,5 +75,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>COLLY_APP_ENV</key>
+	<string>$(COLLY_APP_ENV)</string>
+	<key>COLLY_API_BASE_URL</key>
+	<string>$(COLLY_API_BASE_URL)</string>
+	<key>COLLY_GOOGLE_WEB_CLIENT_ID</key>
+	<string>$(COLLY_GOOGLE_WEB_CLIENT_ID)</string>
+	<key>COLLY_GOOGLE_IOS_CLIENT_ID</key>
+	<string>$(COLLY_GOOGLE_IOS_CLIENT_ID)</string>
 </dict>
 </plist>

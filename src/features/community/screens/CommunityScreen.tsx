@@ -368,7 +368,6 @@ export function CommunityScreen() {
       setComposerSubmitting(true);
       if (composerType === 'FREE_FEED') {
         await createCommunityPost({
-          authorUserId: session.userId,
           countryCode: selectedCountryCode,
           cityCode: selectedCityCode,
           type: 'FREE_FEED',
@@ -379,7 +378,6 @@ export function CommunityScreen() {
       } else {
         if (composerAudienceScope === 'ACCOMMODATION_ONLY') {
           await createCommunityPost({
-            authorUserId: session.userId,
             countryCode: selectedCountryCode,
             cityCode: selectedCityCode,
             type: 'GATHERING',
@@ -398,7 +396,6 @@ export function CommunityScreen() {
           });
         } else {
           await createCommunityPost({
-            authorUserId: session.userId,
             countryCode: selectedCountryCode,
             cityCode: selectedCityCode,
             type: 'GATHERING',

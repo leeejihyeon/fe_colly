@@ -73,3 +73,9 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Local auth config
+ios/Config/Local/*.xcconfig
+!ios/Config/Local/*.xcconfig.example
+ios/collyapp/GoogleService-Info.plist
+android/colly.auth.local.properties

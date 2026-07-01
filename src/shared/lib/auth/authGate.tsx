@@ -1,6 +1,6 @@
 import React, { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { LoginResult } from '../../../features/auth/api/authApi';
-import { refreshMagicToken, signOutMagic } from '../../../features/auth/api/authApi';
+import { refreshMagicToken, signOutAllMagic, signOutMagic } from '../../../features/auth/api/authApi';
 import { clearSession, hydrateSession, persistSession } from './sessionStore';
 
 type AuthGateContextValue = {
@@ -11,6 +11,7 @@ type AuthGateContextValue = {
   closeLogin: () => void;
   completeLogin: (session: LoginResult) => void;
   logout: () => Promise<void>;
+  logoutAll: () => Promise<void>;
 };
 
 const AuthGateContext = createContext<AuthGateContextValue | null>(null);
@@ -65,6 +66,15 @@ export function AuthGateProvider({ children }: PropsWithChildren) {
           if (refreshToken) {
             await signOutMagic(refreshToken);
           }
+        } finally {
+          setSession(null);
+          setLoginOpen(false);
+          await clearSession();
+        }
+      },
+      logoutAll: async () => {
+        try {
+          await signOutAllMagic();
         } finally {
           setSession(null);
           setLoginOpen(false);

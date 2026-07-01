@@ -29,7 +29,6 @@ export type CommunityPost = {
 export type CommunityPostFilterType = 'ALL' | PostType;
 
 export type CreateFreeFeedPostRequest = {
-  authorUserId: number;
   countryCode: string;
   cityCode: string;
   type: 'FREE_FEED';
@@ -39,7 +38,6 @@ export type CreateFreeFeedPostRequest = {
 };
 
 export type CreateGatheringPostRequest = {
-  authorUserId: number;
   countryCode: string;
   cityCode: string;
   type: 'GATHERING';

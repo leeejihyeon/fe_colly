@@ -9,7 +9,7 @@ import { useAuthGate } from '../../../shared/lib/auth/authGate';
  * 마이페이지 탭 루트 화면.
  */
 export function MyPageScreen() {
-  const { session, logout, openLogin } = useAuthGate();
+  const { session, logout, logoutAll, openLogin } = useAuthGate();
 
   return (
     <ScreenContainer>
@@ -18,9 +18,14 @@ export function MyPageScreen() {
       <Text style={styles.status}>Status: {session ? `Signed in as ${session.email}` : 'Guest'}</Text>
 
       {session ? (
-        <Pressable onPress={logout} style={styles.secondaryButton}>
-          <Text style={styles.secondaryButtonText}>Log Out</Text>
-        </Pressable>
+        <>
+          <Pressable onPress={logout} style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Log Out</Text>
+          </Pressable>
+          <Pressable onPress={logoutAll} style={styles.ghostButton}>
+            <Text style={styles.ghostButtonText}>Log Out From All Devices</Text>
+          </Pressable>
+        </>
       ) : (
         <Pressable onPress={openLogin} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Sign In</Text>
@@ -71,5 +76,16 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '700',
     fontSize: 14,
+  },
+  ghostButton: {
+    marginTop: spacing[10],
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[4],
+  },
+  ghostButtonText: {
+    color: colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 13,
   },
 });

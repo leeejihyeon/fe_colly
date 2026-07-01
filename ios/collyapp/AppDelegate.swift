@@ -1,4 +1,5 @@
 import UIKit
+import GoogleSignIn
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
@@ -30,6 +31,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     )
 
     return true
+  }
+
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    let googleHandled = GIDSignIn.sharedInstance.handle(url)
+    let linkingHandled = RCTLinkingManager.application(app, open: url, options: options)
+    return googleHandled || linkingHandled
+  }
+
+  func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    RCTLinkingManager.application(
+      application,
+      continue: userActivity,
+      restorationHandler: restorationHandler
+    )
   }
 }
 

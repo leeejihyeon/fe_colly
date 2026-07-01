@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 import { LoginResult } from '../../../features/auth/api/authApi';
 
-const AUTH_SESSION_KEY = 'colly.auth.session';
+const AUTH_SESSION_SERVICE = 'colly.auth.session';
 
 let memorySession: LoginResult | null | undefined;
 
@@ -22,19 +22,22 @@ export async function hydrateSession(): Promise<LoginResult | null> {
     return memorySession;
   }
 
-  const raw = await AsyncStorage.getItem(AUTH_SESSION_KEY);
+  const credentials = await Keychain.getGenericPassword({ service: AUTH_SESSION_SERVICE });
+  const raw = credentials ? credentials.password : null;
   memorySession = parseSession(raw);
   return memorySession;
 }
 
 export async function persistSession(session: LoginResult): Promise<void> {
   memorySession = session;
-  await AsyncStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+  await Keychain.setGenericPassword('colly', JSON.stringify(session), {
+    service: AUTH_SESSION_SERVICE,
+  });
 }
 
 export async function clearSession(): Promise<void> {
   memorySession = null;
-  await AsyncStorage.removeItem(AUTH_SESSION_KEY);
+  await Keychain.resetGenericPassword({ service: AUTH_SESSION_SERVICE });
 }
 
 export async function getAccessToken(): Promise<string | null> {

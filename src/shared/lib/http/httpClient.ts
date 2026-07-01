@@ -69,6 +69,9 @@ async function requestWithAutoRefresh<T>(
       email: data.email,
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
+      expiresInSeconds: data.expiresInSeconds,
+      refreshExpiresInSeconds: data.refreshExpiresInSeconds,
+      provider: data.provider,
     });
 
     return requestWithAutoRefresh<T>(request, false);
@@ -111,4 +114,7 @@ type LoginResult = {
   email: string;
   accessToken: string;
   refreshToken: string;
+  expiresInSeconds: number;
+  refreshExpiresInSeconds: number;
+  provider: 'EMAIL_MAGIC_LINK' | 'GOOGLE' | 'APPLE';
 };
