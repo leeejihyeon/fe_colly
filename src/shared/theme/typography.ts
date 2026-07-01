@@ -1,30 +1,47 @@
-/**
- * Colly 디자인 시스템 타이포그래피 토큰.
- */
 export const typography = {
   size: {
+    display: 32,
+    titleXl: 28,
+    titleL: 24,
+    titleM: 20,
+    headline: 18,
+    bodyL: 16,
+    bodyM: 15,
+    bodyS: 14,
+    caption: 13,
+    small: 12,
+
     xs: 12,
     sm: 13,
     md: 14,
     lg: 15,
-    xl: 17,
+    xl: 16,
     xxl: 24,
-    display: 28,
   },
   lineHeight: {
+    display: 40,
+    titleXl: 36,
+    titleL: 32,
+    titleM: 28,
+    headline: 26,
+    bodyL: 24,
+    bodyM: 22,
+    bodyS: 20,
+    caption: 18,
+    small: 16,
+
     xs: 16,
     sm: 18,
     md: 20,
     lg: 22,
     xl: 24,
     xxl: 32,
-    display: 36,
   },
   weight: {
     regular: '400',
     medium: '500',
     semibold: '600',
     bold: '700',
-    extrabold: '800',
+    extrabold: '700',
   },
 } as const;

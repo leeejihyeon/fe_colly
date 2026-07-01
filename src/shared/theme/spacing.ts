@@ -1,6 +1,3 @@
-/**
- * Colly 디자인 시스템 간격 토큰.
- */
 export const spacing = {
   0: 0,
   2: 2,
@@ -17,4 +14,7 @@ export const spacing = {
   32: 32,
   40: 40,
   48: 48,
+  64: 64,
+  80: 80,
+  96: 96,
 } as const;
