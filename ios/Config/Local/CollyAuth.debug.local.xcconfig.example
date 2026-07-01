@@ -1,0 +1,3 @@
+COLLY_GOOGLE_WEB_CLIENT_ID = your-google-web-client-id.apps.googleusercontent.com
+COLLY_GOOGLE_IOS_CLIENT_ID = your-google-ios-client-id.apps.googleusercontent.com
+COLLY_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.your-google-reversed-client-id

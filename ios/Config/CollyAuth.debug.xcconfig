@@ -1,0 +1,6 @@
+#include? "../Pods/Target Support Files/Pods-collyapp/Pods-collyapp.debug.xcconfig"
+#include? "CollyAuth.shared.xcconfig"
+#include? "Local/CollyAuth.debug.local.xcconfig"
+
+COLLY_APP_ENV = dev
+COLLY_API_BASE_URL = http:/$()/localhost:18080

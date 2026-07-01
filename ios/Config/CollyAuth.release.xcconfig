@@ -1,0 +1,6 @@
+#include? "../Pods/Target Support Files/Pods-collyapp/Pods-collyapp.release.xcconfig"
+#include? "CollyAuth.shared.xcconfig"
+#include? "Local/CollyAuth.release.local.xcconfig"
+
+COLLY_APP_ENV = prod
+COLLY_API_BASE_URL = https:/$()/api.colly.app

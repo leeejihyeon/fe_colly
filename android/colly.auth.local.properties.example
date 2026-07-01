@@ -1,0 +1,5 @@
+COLLY_APP_ENV=dev
+COLLY_API_BASE_URL=http://10.0.2.2:18080
+COLLY_GOOGLE_WEB_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
+COLLY_GOOGLE_IOS_CLIENT_ID=your-google-ios-client-id.apps.googleusercontent.com
+COLLY_ANDROID_USES_CLEARTEXT_TRAFFIC=true
