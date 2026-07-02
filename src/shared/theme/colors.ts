@@ -1,9 +1,14 @@
 const primary = {
-  default: '#3182F6',
-  hover: '#1B64DA',
-  pressed: '#195CC5',
-  light: '#E8F3FF',
-  extraLight: '#F4F9FF',
+  default: '#6C4DFF',
+  hover: '#5B3FF0',
+  pressed: '#5036D6',
+  light: '#EEE9FF',
+  extraLight: '#F7F4FF',
+} as const;
+
+const accent = {
+  blue: '#4F8CFF',
+  lavender: '#8B7BFF',
 } as const;
 
 const gray = {
@@ -13,10 +18,10 @@ const gray = {
   600: '#6B7684',
   500: '#8B95A1',
   400: '#B0B8C1',
-  300: '#D1D6DB',
-  200: '#E5E8EB',
-  100: '#F2F4F6',
-  50: '#F9FAFB',
+  300: '#D6DAE3',
+  200: '#E8EAF2',
+  100: '#F2F3F8',
+  50: '#F8F9FC',
 } as const;
 
 const semantic = {
@@ -26,33 +31,35 @@ const semantic = {
   info: primary.default,
   black: '#000000',
   white: '#FFFFFF',
-  alternative: '#F9FAFB',
-  assistive: '#F2F4F6',
+  alternative: '#F8F9FC',
+  assistive: '#F2F3F8',
 } as const;
 
 export const colors = {
   primaryScale: primary,
+  accentScale: accent,
   grayScale: gray,
   semantic,
 
   p: {
     50: primary.extraLight,
     100: primary.light,
-    200: '#CFE5FF',
-    300: '#A9CEFF',
-    400: '#6AA6FF',
+    200: '#DDD5FF',
+    300: '#C0B3FF',
+    400: '#9A85FF',
     500: primary.default,
     600: primary.hover,
     700: primary.pressed,
-    800: '#1447A6',
-    900: '#0D2F6C',
-    950: '#081D42',
+    800: '#4128B8',
+    900: '#2F1B87',
+    950: '#1C0F52',
   },
   g: gray,
 
   background: gray[50],
   surface: semantic.white,
   surfaceAlt: primary.extraLight,
+  surfaceSoft: '#F7F5FF',
   textPrimary: gray[900],
   textSecondary: gray[800],
   textTertiary: gray[600],
@@ -62,8 +69,14 @@ export const colors = {
   primaryPressed: primary.pressed,
   primarySoft: primary.light,
   primarySoftest: primary.extraLight,
+  primarySecondary: accent.lavender,
+  primaryAccentBlue: accent.blue,
+  gradientStart: primary.default,
+  gradientEnd: accent.lavender,
+  gradientSoft: primary.extraLight,
   border: gray[200],
   borderStrong: gray[300],
+  borderSoft: '#F0F2F8',
   danger: semantic.error,
   success: semantic.success,
   warning: semantic.warning,

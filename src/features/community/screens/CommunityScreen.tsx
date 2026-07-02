@@ -435,9 +435,9 @@ export function CommunityScreen() {
                 <View style={styles.headerCopy}>
                   <Text style={styles.heroTitle}>Community</Text>
                   <Pressable style={styles.cityRow} onPress={() => setLocationModalOpen(true)}>
-                    <MapPin size={18} color="#2253F6" />
+                    <MapPin size={18} color={colors.primary} />
                     <Text style={styles.cityText}>{cityLabel}</Text>
-                    <ChevronDown size={18} color="#2253F6" />
+                    <ChevronDown size={18} color={colors.primary} />
                   </Pressable>
                 </View>
 
@@ -576,7 +576,7 @@ function MyStayCard({ stay, companions, onManage, onViewMembers }: MyStayCardPro
         </View>
 
         <View style={styles.dateArrowWrap}>
-          <ArrowRight size={30} color="#8A98B5" />
+          <ArrowRight size={30} color={colors.textDisabled} />
         </View>
 
         <View style={styles.dateBlock}>
@@ -640,7 +640,7 @@ function PostCard({ post }: PostCardProps) {
         </View>
 
         <Pressable style={styles.moreButton}>
-          <Ellipsis size={20} color="#71819C" />
+          <Ellipsis size={20} color={colors.textTertiary} />
         </Pressable>
       </View>
 
@@ -655,18 +655,18 @@ function PostCard({ post }: PostCardProps) {
       <View style={styles.postFooterRow}>
         <View style={styles.postFooterMeta}>
           <View style={styles.iconTextRow}>
-            <Heart size={18} color="#7B8AA7" />
+            <Heart size={18} color={colors.textTertiary} />
             <Text style={styles.footerMetaText}>{String((post.id % 12) + 8)}</Text>
           </View>
 
           <View style={styles.iconTextRow}>
-            <MessageCircle size={18} color="#7B8AA7" />
+            <MessageCircle size={18} color={colors.textTertiary} />
             <Text style={styles.footerMetaText}>{String((post.id % 7) + 4)}</Text>
           </View>
 
           {metaCount ? (
             <View style={styles.iconTextRow}>
-              <Users size={18} color="#2253F6" />
+              <Users size={18} color={colors.primary} />
               <Text style={styles.footerMetaAccent}>{metaCount}</Text>
             </View>
           ) : null}
@@ -674,7 +674,7 @@ function PostCard({ post }: PostCardProps) {
 
         <Pressable style={styles.viewLink}>
           <Text style={styles.viewLinkText}>View</Text>
-          <ArrowRight size={16} color="#2253F6" />
+          <ArrowRight size={16} color={colors.primary} />
         </Pressable>
       </View>
     </AppCard>
@@ -1136,7 +1136,7 @@ const styles = StyleSheet.create({
   },
   ghostButton: {
     borderWidth: 1.5,
-    borderColor: '#8CB1FF',
+    borderColor: colors.primarySecondary,
     borderRadius: 999,
     paddingHorizontal: spacing[12],
     paddingVertical: spacing[8],
@@ -1177,7 +1177,7 @@ const styles = StyleSheet.create({
   },
   stayDivider: {
     height: 1,
-    backgroundColor: '#E6EEFC',
+    backgroundColor: colors.primarySoftest,
     marginHorizontal: spacing[16],
   },
   dateGrid: {
@@ -1262,7 +1262,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing[8],
     borderWidth: 1.5,
-    borderColor: '#8CB1FF',
+    borderColor: colors.primarySecondary,
     borderRadius: 999,
     paddingHorizontal: spacing[12],
     paddingVertical: spacing[8],
@@ -1332,8 +1332,8 @@ const styles = StyleSheet.create({
     lineHeight: typography.lineHeight.small,
   },
   errorCard: {
-    backgroundColor: '#FFF8F7',
-    borderColor: '#F5C9C1',
+    backgroundColor: '#FFF7F8',
+    borderColor: '#F5D3D8',
     borderWidth: 1,
     borderRadius: 20,
     padding: spacing[16],
@@ -1341,13 +1341,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing[10],
   },
   errorTitle: {
-    color: '#7A271A',
+    color: '#8A2940',
     fontSize: typography.size.sm,
     lineHeight: typography.lineHeight.sm,
     fontWeight: typography.weight.bold,
   },
   errorBody: {
-    color: '#9A4B3D',
+    color: '#A16374',
     fontSize: typography.size.small,
     lineHeight: typography.lineHeight.small,
   },
@@ -1439,7 +1439,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoftest,
   },
   badgeGreen: {
-    backgroundColor: '#EAF8EF',
+    backgroundColor: '#ECFBF4',
   },
   badgeSoftBlue: {
     backgroundColor: colors.primarySoft,
@@ -1458,13 +1458,13 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   badgeGreenText: {
-    color: '#1A8B4C',
+    color: colors.success,
   },
   badgeSoftBlueText: {
-    color: '#405A8B',
+    color: colors.textSecondary,
   },
   badgeSoftGrayText: {
-    color: '#5A6A84',
+    color: colors.textTertiary,
   },
   postTitle: {
     color: colors.textPrimary,
@@ -1473,7 +1473,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.bold,
   },
   postBody: {
-    color: '#33425F',
+    color: colors.textSecondary,
     fontSize: typography.size.small,
     lineHeight: typography.lineHeight.caption,
   },

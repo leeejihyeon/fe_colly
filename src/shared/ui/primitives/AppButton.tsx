@@ -116,12 +116,12 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   mediumLabel: {
-    fontSize: typography.size.caption,
-    lineHeight: 18,
+    fontSize: typography.size.small,
+    lineHeight: typography.lineHeight.small,
   },
   largeLabel: {
-    fontSize: typography.size.caption,
-    lineHeight: 18,
+    fontSize: typography.size.small,
+    lineHeight: typography.lineHeight.small,
   },
   primaryLabel: { color: colors.semantic.white },
   secondaryLabel: { color: colors.primary },

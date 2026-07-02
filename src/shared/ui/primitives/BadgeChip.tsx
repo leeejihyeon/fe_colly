@@ -24,7 +24,7 @@ const toneStyles = {
     label: { color: colors.primary },
   },
   green: {
-    container: { backgroundColor: '#EAF8EF' },
+    container: { backgroundColor: '#ECFBF4' },
     label: { color: colors.success },
   },
   softBlue: {
